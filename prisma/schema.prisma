@@ -1,0 +1,143 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  role         AdminRole      @default(ADMIN)
+  isActive     Boolean        @default(true)
+  sessions     AdminSession[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model AdminSession {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime  @default(now())
+}
+
+model Blog {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  excerpt        String
+  content        String        @db.Text
+  coverImage     String
+  category       String
+  author         String        @default("EduYatra Team")
+  status         ContentStatus @default(PUBLISHED)
+  featured       Boolean       @default(false)
+  seoTitle       String?
+  seoDescription String?
+  publishedAt    DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model FAQ {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String   @db.Text
+  category    String
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  photo       String?
+  testType    String
+  score       String
+  reading     Int?
+  listening   Int?
+  writing     Int?
+  speaking    Int?
+  destination String?
+  university  String?
+  course      String?
+  content     String   @db.Text
+  isPublished Boolean  @default(true)
+  isFeatured  Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String     @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  service   String
+  message   String     @db.Text
+  source    String     @default("Website Form")
+  status    LeadStatus @default(NEW)
+  notes     String?    @db.Text
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CommunityQuestion {
+  id        String            @id @default(cuid())
+  name      String
+  email     String
+  slug      String            @unique
+  title     String
+  content   String            @db.Text
+  status    ModerationStatus  @default(APPROVED)
+  answers   CommunityAnswer[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model CommunityAnswer {
+  id         String            @id @default(cuid())
+  questionId String
+  question   CommunityQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  name       String
+  email      String
+  content    String            @db.Text
+  isStaff    Boolean           @default(false)
+  status     ModerationStatus  @default(APPROVED)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}

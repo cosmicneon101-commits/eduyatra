@@ -1,0 +1,40 @@
+export const EDUYATRA_CONFIG = {
+  name: "EduYatra Nepal",
+  tagline: "Your Journey to Global Success",
+  address: "New Baneshwor, Kathmandu, Nepal",
+  phone: "+9779811802843",
+  phoneDisplay: "+977 9811802843",
+  phoneRaw: "9779811802843",
+  email: "eduyatra.np@gmail.com",
+  officeHours: "Weekdays: 6:00 AM – 10:00 PM",
+  socials: {
+    instagram: "https://www.instagram.com/eduyatranepal",
+    tiktok: "https://www.tiktok.com/@eduyatra.nepal",
+    facebook: "https://www.facebook.com/share/1bWhdJba7p/",
+    whatsapp: "https://wa.me/9779811802843",
+  },
+  googleFormEnrollment: "https://docs.google.com/forms/d/e/1FAIpQLSc_EduYatraNepalEnrollment/viewform",
+  courses: {
+    pte: {
+      name: "PTE Academic Preparation",
+      fee: "Rs. 1,000",
+      time: "9:00 PM – 10:00 PM",
+      mode: "Online Live Class",
+      waMessage: "Hey I want to book PTE exam.",
+    },
+    duolingo: {
+      name: "Duolingo English Test (DET)",
+      fee: "Rs. 750",
+      time: "8:00 PM – 9:00 PM",
+      mode: "Online Live Class",
+      waMessage: "Hey I want to book Duolingo exam.",
+    },
+    ielts: {
+      name: "IELTS Preparation",
+      fee: "Launching Soon",
+      time: "Evening Batches",
+      mode: "Online Live Class",
+      waMessage: "Hey I want to inquire about IELTS classes.",
+    },
+  },
+};
