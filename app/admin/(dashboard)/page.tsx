@@ -1,0 +1,15 @@
+import Link from "next/link";
+import { dashboardCounts } from "@/lib/admin-queries";
+import { requirePermission } from "@/lib/admin";
+import prisma from "@/lib/db";
+
+export default async function AdminDashboard() {
+  const admin = await requirePermission("DASHBOARD_VIEW");
+  const counts = await dashboardCounts();
+  const [recentLeads, recentLogs] = await Promise.all([
+    prisma.contactSubmission.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { adminUser: { select: { name: true } } } }),
+  ]);
+  const cards = [{ label: "New leads", value: counts.leads, href: "/admin/leads" }, { label: "Pending questions", value: counts.pendingQuestions, href: "/admin/community" }, { label: "Draft blogs", value: counts.drafts, href: "/admin/blogs" }, { label: "Active subscribers", value: counts.subscribers, href: "/admin/subscribers" }];
+  return <div><header className="mb-8"><p className="text-xs font-bold uppercase tracking-widest text-brand-orange">EduYatra Admin</p><h1 className="mt-2 text-3xl font-black text-brand-navy">Good to see you, {admin.name.split(" ")[0]}.</h1><p className="mt-2 text-slate-500">Keep the website content accurate, useful and current.</p></header><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(c => <Link href={c.href} key={c.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-brand-blue/40"><p className="text-sm font-medium text-slate-500">{c.label}</p><p className="mt-2 text-3xl font-black text-brand-navy">{c.value}</p><p className="mt-2 text-xs font-semibold text-brand-blue">Open section →</p></Link>)}</div><div className="mt-8 grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border bg-white p-5"><div className="flex items-center justify-between"><h2 className="font-bold text-brand-navy">Recent leads</h2><Link href="/admin/leads" className="text-xs font-semibold text-brand-blue">View all</Link></div><div className="mt-4 divide-y">{recentLeads.map(lead => <div key={lead.id} className="py-3 flex justify-between gap-4"><div><p className="font-semibold text-sm">{lead.name}</p><p className="text-xs text-slate-500">{lead.service} · {lead.phone}</p></div><span className="text-[10px] font-bold rounded-full bg-orange-50 px-2.5 py-1 text-brand-orange">{lead.status}</span></div>)}{!recentLeads.length && <p className="py-8 text-sm text-slate-400">No leads yet.</p>}</div></section><section className="rounded-2xl border bg-white p-5"><h2 className="font-bold text-brand-navy">Recent admin activity</h2><div className="mt-4 divide-y">{recentLogs.map(log => <div key={log.id} className="py-3"><p className="text-sm font-semibold">{log.summary}</p><p className="text-xs text-slate-500 mt-1">{log.adminUser?.name || "System"} · {log.action} · {log.createdAt.toLocaleString()}</p></div>)}{!recentLogs.length && <p className="py-8 text-sm text-slate-400">No activity recorded yet.</p>}</div></section></div></div>;
+}

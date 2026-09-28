@@ -1,0 +1,5 @@
+import SectionHeading from "@/components/public/SectionHeading";
+import TestBookingGrid from "@/components/public/TestBookingGrid";
+import prisma from "@/lib/db";
+export const dynamic="force-dynamic";
+export default async function TestBookingPage(){const services=await prisma.testBookingService.findMany({where:{isPublished:true},orderBy:{sortOrder:"asc"}});return <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><SectionHeading eyebrow="Test booking" title="Book your next test through EduYatra" description="Choose the test you need. The booking button opens WhatsApp with a predefined message so you can quickly ask for current dates and availability."/><div className="mt-10"><TestBookingGrid services={services}/></div><div className="mt-12 rounded-2xl border border-orange-100 bg-orange-50 p-6 text-sm leading-6 text-slate-700"><strong className="text-brand-navy">Note:</strong> Test dates, fees and availability can change. EduYatra will confirm the current details through WhatsApp.</div></div>}
