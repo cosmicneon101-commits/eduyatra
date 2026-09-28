@@ -1,0 +1,5 @@
+import { CalendarCheck, ArrowUpRight } from "lucide-react";
+import { getWhatsAppLink } from "@/lib/whatsapp";
+export default function TestBookingGrid({ services }: { services: any[] }) {
+  return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{services.map((service) => <a key={service.id} href={getWhatsAppLink(service.whatsappMessage)} target="_blank" rel="noreferrer" className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-1 hover:border-brand-blue/30 hover:shadow-lg"><div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue"><CalendarCheck className="h-5 w-5" /></span><ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-brand-orange" /></div><h3 className="mt-4 text-lg font-extrabold text-brand-navy">Book {service.name}</h3><p className="mt-1 text-sm text-slate-500">Get current test-date guidance through WhatsApp.</p><span className="mt-4 inline-block text-xs font-extrabold text-brand-orange">Book via WhatsApp →</span></a>)}</div>;
+}

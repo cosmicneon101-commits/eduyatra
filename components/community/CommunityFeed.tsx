@@ -11,6 +11,8 @@ export default function CommunityFeed({ initialQuestions }: { initialQuestions: 
   const [content, setContent] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [notice, setNotice] = useState("");
+  const [website, setWebsite] = useState("");
 
   useEffect(() => {
     setCachedEmail(localStorage.getItem("eduyatra_student_email") || "");
@@ -28,23 +30,31 @@ export default function CommunityFeed({ initialQuestions }: { initialQuestions: 
     const res = await fetch("/api/community/questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: finalName, email: finalEmail, title, content }),
+      body: JSON.stringify({ name: finalName, email: finalEmail, title, content, website }),
     });
     if (res.ok) {
       localStorage.setItem("eduyatra_student_email", finalEmail);
       localStorage.setItem("eduyatra_student_name", finalName);
       setCachedEmail(finalEmail);
       setCachedName(finalName);
-      const created = await res.json();
-      setQuestions([created, ...questions]);
       setShowModal(false);
       setTitle("");
       setContent("");
+      setNotice("Your question has been submitted for review. It will appear after EduYatra approves it.");
+    } else {
+      const result = await res.json().catch(() => null);
+      alert(result?.error || "Unable to submit your question.");
     }
   };
 
   return (
     <div>
+      {notice && (
+        <div className="mb-4 rounded-xl border border-brand-blue/20 bg-brand-blue/5 px-4 py-3 text-sm text-brand-navy" role="status">
+          {notice}
+        </div>
+      )}
+
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl border mb-6">
         <div>
           <h2 className="font-bold text-slate-900">Student Discussion Forum</h2>
@@ -65,7 +75,7 @@ export default function CommunityFeed({ initialQuestions }: { initialQuestions: 
                 <input placeholder="Your Email" type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
               </>
             )}
-            <input placeholder="Title / Topic" required value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
+            <input tabIndex={-1} aria-hidden="true" autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)} className="hidden" /><input placeholder="Title / Topic" required value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
             <textarea placeholder="Describe your question..." rows={3} required value={content} onChange={e => setContent(e.target.value)} className="w-full p-2 border rounded-lg text-sm" />
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-xs">Cancel</button>

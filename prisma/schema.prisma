@@ -30,16 +30,34 @@ enum ModerationStatus {
   REJECTED
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  LOGIN
+  LOGOUT
+  ACTIVATE
+  DEACTIVATE
+  PERMISSION_CHANGE
+  STATUS_CHANGE
+}
+
 model AdminUser {
-  id           String         @id @default(cuid())
-  email        String         @unique
+  id           String            @id @default(cuid())
+  email        String            @unique
   name         String
   passwordHash String
-  role         AdminRole      @default(ADMIN)
-  isActive     Boolean        @default(true)
+  role         AdminRole         @default(ADMIN)
+  isActive     Boolean           @default(true)
   sessions     AdminSession[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  permissions  AdminPermission[]
+  auditLogs    AuditLog[]
+  mediaAssets  MediaAsset[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  @@index([isActive, role])
 }
 
 model AdminSession {
@@ -50,6 +68,42 @@ model AdminSession {
   expiresAt   DateTime
   createdAt   DateTime  @default(now())
   lastUsedAt  DateTime  @default(now())
+  @@index([adminUserId])
+  @@index([expiresAt])
+}
+
+model Permission {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  label       String
+  group       String
+  description String?
+  assignments AdminPermission[]
+}
+
+model AdminPermission {
+  id           String     @id @default(cuid())
+  adminUserId  String
+  permissionId String
+  adminUser    AdminUser  @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  @@unique([adminUserId, permissionId])
+  @@index([permissionId])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  adminUserId String?
+  adminUser   AdminUser?  @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+  action      AuditAction
+  resource    String
+  resourceId  String?
+  summary     String
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  @@index([adminUserId, createdAt])
+  @@index([resource, createdAt])
 }
 
 model Blog {
@@ -61,13 +115,15 @@ model Blog {
   coverImage     String
   category       String
   author         String        @default("EduYatra Team")
-  status         ContentStatus @default(PUBLISHED)
+  status         ContentStatus @default(DRAFT)
   featured       Boolean       @default(false)
   seoTitle       String?
   seoDescription String?
-  publishedAt    DateTime      @default(now())
+  publishedAt    DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  @@index([status, publishedAt])
+  @@index([featured, publishedAt])
 }
 
 model FAQ {
@@ -79,6 +135,8 @@ model FAQ {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@index([isPublished, sortOrder])
+  @@index([category, isPublished])
 }
 
 model Testimonial {
@@ -100,6 +158,7 @@ model Testimonial {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  @@index([isPublished, isFeatured, sortOrder])
 }
 
 model ContactSubmission {
@@ -114,6 +173,17 @@ model ContactSubmission {
   notes     String?    @db.Text
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  @@index([status, createdAt])
+  @@index([service, status])
+}
+
+model AnnouncementSubscriber {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([isActive, createdAt])
 }
 
 model CommunityQuestion {
@@ -123,10 +193,11 @@ model CommunityQuestion {
   slug      String            @unique
   title     String
   content   String            @db.Text
-  status    ModerationStatus  @default(APPROVED)
+  status    ModerationStatus  @default(PENDING)
   answers   CommunityAnswer[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+  @@index([status, createdAt])
 }
 
 model CommunityAnswer {
@@ -137,7 +208,125 @@ model CommunityAnswer {
   email      String
   content    String            @db.Text
   isStaff    Boolean           @default(false)
-  status     ModerationStatus  @default(APPROVED)
+  status     ModerationStatus  @default(PENDING)
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+  @@index([questionId, status, createdAt])
+}
+
+model Course {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  shortName   String?
+  description String          @db.Text
+  mode        String          @default("Online Classes")
+  availability String        @default("Multiple batches available")
+  features    CourseFeature[]
+  packages    CoursePackage[]
+  isPublished Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  @@index([isPublished, sortOrder])
+}
+
+model CoursePackage {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name        String
+  price       Int
+  description String
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([courseId, isPublished, sortOrder])
+}
+
+model CourseFeature {
+  id        String @id @default(cuid())
+  courseId  String
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  label     String
+  sortOrder Int    @default(0)
+  @@index([courseId, sortOrder])
+}
+
+model TestBookingService {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  description     String?
+  whatsappMessage String
+  isPublished     Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([isPublished, sortOrder])
+}
+
+model Country {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  slug        String           @unique
+  heroImage   String?
+  intro       String           @db.Text
+  ctaLabel    String           @default("Talk to EduYatra")
+  isPublished Boolean          @default(true)
+  isFeatured  Boolean          @default(false)
+  sortOrder   Int              @default(0)
+  sections    CountrySection[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  @@index([isPublished, sortOrder])
+}
+
+model CountrySection {
+  id          String   @id @default(cuid())
+  countryId   String
+  country     Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  heading     String
+  content     String   @db.Text
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  @@index([countryId, isPublished, sortOrder])
+}
+
+model Page {
+  id             String        @id @default(cuid())
+  title          String
+  slug           String        @unique
+  heroTitle      String?
+  heroSubtitle   String?
+  heroImage      String?
+  content        String        @db.Text
+  status         ContentStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  @@index([status, updatedAt])
+}
+
+model MediaAsset {
+  id           String    @id @default(cuid())
+  filename     String
+  url          String
+  altText      String?
+  mimeType     String
+  sizeBytes    Int?
+  uploadedById String?
+  uploadedBy   AdminUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  @@index([mimeType, createdAt])
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
 }

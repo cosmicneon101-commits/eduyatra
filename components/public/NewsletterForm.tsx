@@ -1,0 +1,7 @@
+"use client";
+import { useState } from "react";
+export default function NewsletterForm() {
+  const [email, setEmail] = useState(""); const [website, setWebsite] = useState(""); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) { e.preventDefault(); setBusy(true); setMessage(""); const res = await fetch("/api/subscribe", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,website}) }); const data=await res.json().catch(()=>({})); setBusy(false); setMessage(res.ok ? "You're subscribed. We'll keep you updated." : data.error || "Unable to subscribe right now."); if(res.ok)setEmail(""); }
+  return <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row"><input tabIndex={-1} aria-hidden="true" autoComplete="off" value={website} onChange={e=>setWebsite(e.target.value)} className="hidden" /><input aria-label="Email address" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Your email address" className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm outline-none focus:border-brand-blue"/><button disabled={busy} className="rounded-full bg-brand-navy px-5 py-3 text-sm font-extrabold text-white disabled:opacity-60">{busy ? "Joining…" : "Subscribe"}</button>{message && <span className="sr-only" role="status">{message}</span>}</form>;
+}

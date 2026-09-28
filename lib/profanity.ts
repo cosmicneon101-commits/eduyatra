@@ -1,19 +1,23 @@
 const FORBIDDEN_WORDS = [
   "abuse", "idiot", "stupid", "scam", "fraud", "fake", "fuck", "shit",
   "bitch", "asshole", "bastard", "randi", "mujhi", "lado", "chikne", "geda",
-  "chutiya", "bhalu", "ladoo", "madarchod", "behenchod"
+  "chutiya", "bhalu", "ladoo", "madarchod", "behenchod",
 ];
+
+function wordPattern(word: string): RegExp {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`, "i");
+}
 
 export function containsProfanity(text: string): boolean {
   if (!text) return false;
-  const lower = text.toLowerCase();
-  return FORBIDDEN_WORDS.some((w) => new RegExp(`\b${w}\b`, "i").test(lower));
+  return FORBIDDEN_WORDS.some((word) => wordPattern(word).test(text));
 }
 
 export function sanitizeText(text: string): string {
   let cleaned = text;
-  FORBIDDEN_WORDS.forEach((w) => {
-    cleaned = cleaned.replace(new RegExp(`\b${w}\b`, "gi"), "***");
+  FORBIDDEN_WORDS.forEach((word) => {
+    cleaned = cleaned.replace(wordPattern(word), "***");
   });
   return cleaned;
 }
